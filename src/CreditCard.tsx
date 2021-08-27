@@ -227,8 +227,8 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
           response.isValid = true;
 
         }
-      
         console.log(response)
+        
       } catch (validationError) {
         setErrors((prev) => ({
           ...prev,
@@ -268,6 +268,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
         const numberMask = maskChars.join('');
 
         const cvvMask = ''.padStart(code.size, '9');
+        
         const brandImage = Images.brands[type]
           ? Images.brands[type]
           : Images.brands.default;
@@ -503,7 +504,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
                 keyboardType="numeric"
                 returnKeyType="done"
                 onChange={handleInputChange}
-                placeholder={placeholders.cvv}
+                placeholder={placeholders.cvv.repeat(cardConfig.cvvMask.length)}
                 style={[
                   styles.textData,
                   { color: errors.cvv ? errorTextColor : textColor },
