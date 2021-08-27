@@ -73,6 +73,9 @@ const Images: any = {
   brands: {
     default: '',
     visa: require('./images/brands/visa.png'),
+    mastercard: require('./images/brands/mastercard.png'),
+    'american-express': require('./images/brands/american-express.png'),
+    'elo': require('./images/brands/elo.png'),
   },
   icons: {
     rotate: require('./images/icons/rotate.png'),
@@ -206,17 +209,26 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
       };
 
       try {
-        // Check potentially invalid... If has error, it is throwed...
-        validationSchema.validateSyncAt(name, values, {
-          context: { runtime: true },
-        });
-        response.isPontentiallyValid = true;
 
-        // Check if is valid... If has error, it is throwed...
-        validationSchema.validateSyncAt(name, values, {
-          context: { runtime: false },
-        });
-        response.isValid = true;
+        if (name=='cvv') {
+          response.isValid = true;
+          response.isPontentiallyValid = true;
+        } else {
+          // Check potentially invalid... If has error, it is throwed...
+          validationSchema.validateSyncAt(name, values, {
+            context: { runtime: true },
+          });
+          response.isPontentiallyValid = true;
+        
+          // Check if is valid... If has error, it is throwed...
+          validationSchema.validateSyncAt(name, values, {
+            context: { runtime: false },
+          });
+          response.isValid = true;
+
+        }
+      
+        console.log(response)
       } catch (validationError) {
         setErrors((prev) => ({
           ...prev,
@@ -356,7 +368,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
             background={background}
             style={[[getSideStyle(CardSideEnum.FRONT)]]}
           >
-            <View style={styles.header}>
+            <View style={{...styles.header, height: 40}}>
               <TouchableOpacity onPress={rotate}>
                 <Image source={Images.icons.rotate} />
               </TouchableOpacity>
@@ -365,6 +377,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
                 <Animatable.Image
                   source={cardConfig.brandImage}
                   animation="slideInRight"
+                  style={{height: 40, resizeMode: 'contain'}}
                   duration={400}
                   useNativeDriver
                 />
@@ -573,7 +586,7 @@ const styles = StyleSheet.create({
   },
   textData: {
     fontWeight: 'bold',
-    fontSize: 16 / PixelRatio.getFontScale(),
+    fontSize: Platform.OS == 'ios' ? (16 / PixelRatio.getFontScale()) : (14 / PixelRatio.getFontScale()) ,
     marginTop: Platform.OS == 'android' ? -10 : undefined,
     marginLeft: Platform.OS == 'android' ? -4 : undefined,
   },
