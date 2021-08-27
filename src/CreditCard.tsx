@@ -618,15 +618,18 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'flex-end',
     justifyContent: 'flex-end',
-    bottom: 24,
+    bottom: Platform.OS == 'ios' ? 40 : 15,
   },
   holderWrapper: {
     flex: 2,
     marginRight: 16,
+    bottom:10
   },
   expirationWrapper: {
     flex: 1,
     alignItems: 'flex-end',
+    bottom:10,
+    
   },
 });
 
