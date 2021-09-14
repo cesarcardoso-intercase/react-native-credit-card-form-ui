@@ -78,7 +78,8 @@ const Images: any = {
     'elo': require('./images/brands/elo.png'),
   },
   icons: {
-    rotate: require('./images/icons/rotate.png'),
+    rotateDark: require('./images/icons/rotateDark.png'),
+    rotateLight: require('./images/icons/rotateLight.png'),
   },
 };
 
@@ -112,6 +113,8 @@ interface CreditCardProps {
   textColor?: string;
   placeholderTextColor?: string;
   errorTextColor?: string;
+  flipTheme?: string;
+  cartMethod?: string;
   onValidStateChange?: (cardDataIsValid: boolean) => void;
 }
 
@@ -121,8 +124,8 @@ export interface SubmitResponse {
 }
 
 const defaultCardConfig = {
-  numberMask: '9999 9999 9999 9999',
-  cvvMask: '999',
+  numberMask: '0000 0000 0000 0000',
+  cvvMask: '---',
   brandImage: Images.brands.default,
   brandName: '',
 };
@@ -139,6 +142,8 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
       initialValues,
       expirationDateFormat,
       onValidStateChange,
+      flipTheme,
+      cardMethod,
     }: any,
     ref
   ) => {
@@ -371,7 +376,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
           >
             <View style={{...styles.header, height: 40}}>
               <TouchableOpacity onPress={rotate}>
-                <Image source={Images.icons.rotate} />
+                <Image source={ flipTheme== 'dark' ? Images.icons.rotateDark : Images.icons.rotateLight } />
               </TouchableOpacity>
 
               {!!cardConfig.brandImage && (
@@ -493,7 +498,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
           >
             <View style={styles.strip} />
             <TouchableOpacity onPress={rotate}>
-              <Image source={Images.icons.rotate} />
+              <Image source={ flipTheme== 'dark' ? Images.icons.rotateDark : Images.icons.rotateLight } />
             </TouchableOpacity>
             <View style={styles.cvvWrapper} pointerEvents="box-none">
               <Text style={[styles.textLabel, textStyle]}>{labels.cvv}</Text>
