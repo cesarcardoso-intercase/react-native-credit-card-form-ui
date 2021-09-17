@@ -72,13 +72,16 @@ const Images: any = {
   chip: require('./images/chip.png'),
   brands: {
     default: '',
-    visa: require('./images/brands/visa.png'),
-    mastercard: require('./images/brands/mastercard.png'),
+    'visa':             require('./images/brands/visa.png'),
+    'mastercard':       require('./images/brands/mastercard.png'),
     'american-express': require('./images/brands/american-express.png'),
-    'elo': require('./images/brands/elo.png'),
+    'elo':              require('./images/brands/elo.png'),
+    'sodexo':           require('./images/brands/elo.png'),
+    'alelo':            require('./images/brands/elo.png'),
+    'vr':               require('./images/brands/vr.png'),
   },
   icons: {
-    rotateDark: require('./images/icons/rotateDark.png'),
+    rotateDark:  require('./images/icons/rotateDark.png'),
     rotateLight: require('./images/icons/rotateLight.png'),
   },
 };
@@ -114,8 +117,10 @@ interface CreditCardProps {
   placeholderTextColor?: string;
   errorTextColor?: string;
   flipTheme?: string;
-  cartMethod?: string;
+  cardMethod?: string;
+  onRemoteCardBrand?: () => string;
   onValidStateChange?: (cardDataIsValid: boolean) => void;
+  onCardDataChange?: (cardData: any) => void;
 }
 
 export interface SubmitResponse {
@@ -124,8 +129,8 @@ export interface SubmitResponse {
 }
 
 const defaultCardConfig = {
-  numberMask: '0000 0000 0000 0000',
-  cvvMask: '---',
+  numberMask: '9999 9999 9999 9999',
+  cvvMask: '999',
   brandImage: Images.brands.default,
   brandName: '',
 };
@@ -142,6 +147,8 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
       initialValues,
       expirationDateFormat,
       onValidStateChange,
+      onCardDataChange,
+      onRemoteCardBrand,
       flipTheme,
       cardMethod,
     }: any,
@@ -151,6 +158,8 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
     const [cardData, setCardData] = React.useState(initialValues);
     const [activeSide, setActiveSide] = React.useState(CardSideEnum.FRONT);
     const [cardConfig, setCardConfig] = React.useState(defaultCardConfig);
+    //const [cardBrand, setCardBrand] = React.useState('none')
+
     const [errors, setErrors] = React.useState({
       number: false,
       holder: false,
@@ -174,6 +183,8 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
 
     /** Runtime Styles */
     const textStyle = { color: textColor };
+
+    //const [cardBrand, setCardBrand] = React.useState('')
 
     /** Animate Card (Rotate) */
     const rotate = React.useCallback(() => {
@@ -207,6 +218,8 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
 
     const validateField = React.useCallback((name: string, value: any) => {
       const values: any = { [name]: value };
+      
+      
       const response = {
         isPontentiallyValid: false,
         isValid: false,
@@ -214,6 +227,16 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
       };
 
       try {
+
+        // ### tratamento para voucher, nao validar
+        if (cardMethod == 'voucher') {
+          response.isValid = true
+          response.isPontentiallyValid = true
+          response.error = null
+          return response;
+        }
+        // #########################################
+
 
         if (name=='cvv') {
           response.isValid = true;
@@ -232,7 +255,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
           response.isValid = true;
 
         }
-        console.log(response)
+        //console.log(response)
         
       } catch (validationError) {
         setErrors((prev) => ({
@@ -242,10 +265,14 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
       }
 
       return response;
+
+
     }, []);
 
     const loadCardConfig = (cardNumber: string) => {
+      
       const { card = null } = cardValidator.number(cardNumber);
+      
       if (!card) {
         setCardConfig({ ...defaultCardConfig });
         return;
@@ -259,12 +286,17 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
         niceType = '',
       } = card;
 
+      //console.log (card)
+
       setCardData((prev: any) => ({
         ...prev,
         brand: type,
       }));
 
       setCardConfig((prev: any) => {
+        
+        console.log ('### [3] setCardConfig... ' + onRemoteCardBrand())
+
         const maxLength = Math.max(...lengths);
         const maskChars = ''.padStart(maxLength, '9').split('');
         for (let i = 0; i < gaps.length; i += 1) {
@@ -274,28 +306,43 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
 
         const cvvMask = ''.padStart(code.size, '9');
         
-        const brandImage = Images.brands[type]
-          ? Images.brands[type]
-          : Images.brands.default;
+        console.log ('card method -----------> ' + cardMethod)
+        console.log ('type ------------------> ' + type)
+        console.log ('remoteType ------------> ' + onRemoteCardBrand())
+
+       // console.log ('brand ????? ' + cardBrand)
+        const flagType = cardMethod == 'credit' ? type : onRemoteCardBrand()
+        const flagName = cardMethod == 'credit' ? niceType : null
+        const brandImage = Images.brands[flagType]
+          ? Images.brands[flagType]
+          :  cardMethod == 'credit' ? Images.brands.default : null;
 
         return {
           ...prev,
           numberMask,
           cvvMask,
           brandImage,
-          brandName: niceType,
+          brandName: flagName,
         };
       });
     };
 
     const handleInputChange = React.useCallback(
       (name, text) => {
+
+
+        console.log ('### [4] handleInputChange... ' + onRemoteCardBrand())
+        
+
         setCardData((prev: any) => ({ ...prev, [name]: text }));
-        const { isValid } = validateField(name, text);
+        
+        
+        let { isValid } = validateField(name, text); 
+
 
         if (name === 'number') {
           loadCardConfig(text);
-          if (isValid) {
+          if (isValid && cardMethod== 'credit') {
             focusField(holderInputRef);
           }
         } else if (
@@ -307,7 +354,7 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
           rotate();
         }
       },
-      [validateField, rotate, expirationMask]
+      [validateField, rotate, expirationMask, onRemoteCardBrand]
     );
 
     const getSideStyle = React.useCallback(
@@ -353,17 +400,36 @@ const CreditCard = React.forwardRef<CreditCardType, CreditCardProps>(
     }, [cardData]);
 
     React.useEffect(() => {
+
+      console.log('### useEffect [cardData, onValidStateChange]...')
+
       if (cardDataIsValid.current !== undefined) {
         try {
+          
+          console.log('### [1] remote brand effect === '+ onRemoteCardBrand())
+          console.log(cardData)
+
+          onCardDataChange(cardData)
+ 
           validationSchema.validateSync(cardData, {
             context: { runtime: false },
           });
-          onValidStateChange(true);
+
         } catch (validationErrors) {
           onValidStateChange(false, validationErrors);
         }
       }
     }, [cardData, onValidStateChange]);
+
+    React.useEffect(() => {
+      console.log('### [2] remote brand effect === '+ onRemoteCardBrand())
+  
+        if (cardMethod=='voucher') {
+
+         // setCardData((prev: any) => ({ ...prev, brand: cardBrand }));
+
+        } 
+    }, [onRemoteCardBrand]);
 
     React.useImperativeHandle(ref, () => ({ submit }));
 
